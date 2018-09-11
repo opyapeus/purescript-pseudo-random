@@ -6,18 +6,23 @@ module Random.PseudoRandom
     , class Randoms
     , randoms
     , randomRs
+    , class RandomEff
+    , randomEff
+    , randomREff
     ) where
 
 import Prelude
 
 import Data.Array ((:))
 import Data.Int (toNumber)
-import Random.LCG (Seed, lcgM, lcgNext, unSeed)
+import Effect (Effect)
+import Random.LCG (Seed, lcgM, lcgNext, randomSeed, unSeed)
 
 type RandomPair a =
   { newVal :: a
   , newSeed :: Seed
   }
+
 
 class Ord a <= Random a where
   random :: Seed -> RandomPair a
@@ -66,6 +71,7 @@ instance randomBoolean :: Random Boolean where
         rp = random seed
         newVal = rp.newVal && max || min
 
+
 class Random a <= Randoms a where
   randoms :: Int -> Seed -> Array a
   randomRs :: a -> a -> Int -> Seed -> Array a
@@ -83,3 +89,17 @@ randomsF f i seed
   | i > 0 = rp.newVal : randomsF f (i - 1) rp.newSeed
     where rp = f seed
   | otherwise = [] -- i == 0
+
+
+class Random a <= RandomEff a where
+  -- NOTE: https://github.com/purescript/documentation/blob/master/errors/OrphanTypeDeclaration.md
+  -- TODO: eliminate {}
+  randomEff :: {} -> Effect a
+  randomREff :: a -> a -> Effect a
+
+instance randomEffRandom :: Random a => RandomEff a where
+  randomEff :: {} -> Effect a
+  randomEff _ = pure <<< _.newVal <<< random =<< randomSeed
+  
+  randomREff :: a -> a -> Effect a
+  randomREff min max = pure <<< _.newVal <<< randomR min max =<< randomSeed
