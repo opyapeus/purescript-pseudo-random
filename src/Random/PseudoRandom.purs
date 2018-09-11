@@ -9,6 +9,7 @@ module Random.PseudoRandom
     , class RandomEff
     , randomEff
     , randomREff
+    , module ReExportLCG
     ) where
 
 import Prelude
@@ -18,6 +19,7 @@ import Data.Enum (fromEnum, toEnumWithDefaults)
 import Data.Int (toNumber)
 import Effect (Effect)
 import Random.LCG (Seed, lcgM, lcgNext, randomSeed, unSeed)
+import Random.LCG (Seed, mkSeed, unSeed, randomSeed) as ReExportLCG
 
 type RandomPair a =
   { newVal :: a
