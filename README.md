@@ -22,4 +22,10 @@ This library depends on [purescript-lcg](https://github.com/purescript/purescrip
 
 ## Installation
 
+```sh
+bower install purescript-pseudo-random
+```
+
 ## Documentation
+
+Module documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-pseudo-random).
