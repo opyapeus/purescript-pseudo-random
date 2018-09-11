@@ -17,6 +17,8 @@ main = do
   quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Number
   log "Boolean"
   quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Boolean
+  log "Char"
+  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Char
   log "randomRs should equal to randomR chain"
   log "Int"
   quickCheck \n -> let seed = mkSeed n in randomRs 0 10 len seed ==? randomRs' 0 10 len seed
@@ -24,6 +26,8 @@ main = do
   quickCheck \n -> let seed = mkSeed n in randomRs 0.0 10.0 len seed ==? randomRs' 0.0 10.0 len seed
   log "Boolean"
   quickCheck \n -> let seed = mkSeed n in randomRs true false len seed ==? randomRs' true false len seed
+  log "Char"
+  quickCheck \n -> let seed = mkSeed n in randomRs 'a' 'z' len seed ==? randomRs 'a' 'z' len seed
   where len = 10
 
 randoms' :: forall a. Random a => Int -> Seed -> Array a

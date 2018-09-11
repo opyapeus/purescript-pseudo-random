@@ -14,6 +14,7 @@ module Random.PseudoRandom
 import Prelude
 
 import Data.Array ((:))
+import Data.Enum (fromEnum, toEnumWithDefaults)
 import Data.Int (toNumber)
 import Effect (Effect)
 import Random.LCG (Seed, lcgM, lcgNext, randomSeed, unSeed)
@@ -70,6 +71,21 @@ instance randomBoolean :: Random Boolean where
       where
         rp = random seed
         newVal = rp.newVal && max || min
+
+instance randomChar :: Random Char where
+  random :: Seed -> RandomPair Char
+  random seed = { newVal: newVal, newSeed: intRp.newSeed }
+    where
+      intRp = randomR 0 65535 seed
+      newVal = toEnumWithDefaults bottom top intRp.newVal
+
+  randomR :: Char -> Char -> Seed -> RandomPair Char
+  randomR min max seed
+    | min > max = randomR max min seed -- NOTE: flip min max
+    | otherwise = { newVal: newVal, newSeed: intRp.newSeed }
+      where
+        intRp = randomR (fromEnum min) (fromEnum max) seed
+        newVal = toEnumWithDefaults bottom top intRp.newVal
 
 
 class Random a <= Randoms a where
