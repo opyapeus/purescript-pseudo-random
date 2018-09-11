@@ -1,5 +1,7 @@
 # purescript-pseudo-random
 
+[![Build status](https://travis-ci.org/opyapeus/purescript-pseudo-random.svg?branch=master)](https://travis-ci.org/opyapeus/purescript-pseudo-random)
+
 A pseudo random value generator like [System.Random](http://hackage.haskell.org/package/random) in Haskell.
 
 This library depends on [purescript-lcg](https://github.com/purescript/purescript-lcg) using linear congruential generator algorithm (LCG).
