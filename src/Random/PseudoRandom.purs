@@ -14,7 +14,9 @@ module Random.PseudoRandom
 
 import Prelude
 
-import Data.Array ((:))
+import Control.Monad.ST (ST, run, for)
+import Control.Monad.ST.Ref (new, read, write)
+import Data.Array.ST (STArray, push, withArray)
 import Data.Enum (fromEnum, toEnumWithDefaults)
 import Data.Int (toNumber)
 import Effect (Effect)
@@ -102,11 +104,16 @@ instance randomsRandom :: Random a => Randoms a where
   randomRs min max = randomsF (randomR min max)
 
 randomsF :: forall a. Randoms a => (Seed -> RandomPair a) -> Int -> Seed -> Array a
-randomsF f i seed
-  | i < 0 = randomsF f (-i) seed -- NOTE: reverse i
-  | i > 0 = rp.newVal : randomsF f (i - 1) rp.newSeed
-    where rp = f seed
-  | otherwise = [] -- i == 0
+randomsF f i seed = run (withArray fill [])
+  where
+    fill :: forall h. STArray h a -> ST h Unit
+    fill arr = do
+      seedref <- new seed
+      for 0 i $ \x -> do
+                  seed' <- read seedref
+                  let rp = f seed'
+                  void (write rp.newSeed seedref)
+                  void (push rp.newVal arr)
 
 
 class Random a <= RandomEff a where
@@ -118,6 +125,6 @@ class Random a <= RandomEff a where
 instance randomEffRandom :: Random a => RandomEff a where
   randomEff :: {} -> Effect a
   randomEff _ = pure <<< _.newVal <<< random =<< randomSeed
-  
+
   randomREff :: a -> a -> Effect a
   randomREff min max = pure <<< _.newVal <<< randomR min max =<< randomSeed
