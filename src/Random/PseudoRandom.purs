@@ -109,11 +109,11 @@ randomsF f i seed = run (withArray fill [])
     fill :: forall h. STArray h a -> ST h Unit
     fill arr = do
       seedref <- new seed
-      for 0 i $ \x -> do
-                  seed' <- read seedref
-                  let rp = f seed'
-                  void (write rp.newSeed seedref)
-                  void (push rp.newVal arr)
+      for 0 i \_ -> do
+        seed' <- read seedref
+        let rp = f seed'
+        void (write rp.newSeed seedref)
+        void (push rp.newVal arr)
 
 
 class Random a <= RandomEff a where
