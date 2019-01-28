@@ -10,6 +10,10 @@ import Test.QuickCheck (Seed, mkSeed, quickCheck, (==?))
 
 main :: Effect Unit
 main = do
+  let maxStack = 100000
+  log "randomRs is stack-safe"
+  let _ = randomRs 0 10 maxStack (mkSeed 1) :: Array Int
+
   log "randoms should equal to random chain"
   log "Int"
   quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Int
@@ -43,6 +47,6 @@ randomRs' min max n seed = map _.newVal $ iterate next n initial
     next rp = randomR min max rp.newSeed
 
 -- NOTE: assumption that i is greater than 0
-iterate :: forall a. (a -> a) -> Int -> a -> Array a 
+iterate :: forall a. (a -> a) -> Int -> a -> Array a
 iterate f 0 x = []
 iterate f n x = x : iterate f (n - 1) (f x)
