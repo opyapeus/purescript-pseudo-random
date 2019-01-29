@@ -3,10 +3,8 @@ module Random.PseudoRandom
     , class Random
     , random
     , randomR
-    , class Randoms
     , randoms
     , randomRs
-    , class RandomEff
     , randomEff
     , randomREff
     , module ReExportLCG
@@ -28,17 +26,14 @@ type RandomPair a =
   , newSeed :: Seed
   }
 
-
 class Ord a <= Random a where
   random :: Seed -> RandomPair a
   randomR :: a -> a -> Seed -> RandomPair a
 
 instance randomInt :: Random Int where
-  random :: Seed -> RandomPair Int
   random seed = { newVal: unSeed newSeed, newSeed: newSeed }
     where newSeed = lcgNext seed
 
-  randomR :: Int -> Int -> Seed -> RandomPair Int
   randomR min max seed
     | min > max = randomR max min seed -- NOTE: flip min max
     | otherwise = { newVal: newVal, newSeed: rp.newSeed }
@@ -47,13 +42,11 @@ instance randomInt :: Random Int where
         newVal = rp.newVal `mod` (max - min + 1) + min
 
 instance randomNumber :: Random Number where
-  random :: Seed -> RandomPair Number
   random seed = { newVal: newVal, newSeed: intRp.newSeed }
     where
       intRp = random seed
       newVal = toNumber intRp.newVal / toNumber lcgM
 
-  randomR :: Number -> Number -> Seed -> RandomPair Number
   randomR min max seed
     | min > max = randomR max min seed -- NOTE: flip min max
     | otherwise = { newVal: newVal, newSeed: rp.newSeed }
@@ -62,13 +55,11 @@ instance randomNumber :: Random Number where
         newVal = rp.newVal * (max - min) + min
 
 instance randomBoolean :: Random Boolean where
-  random :: Seed -> RandomPair Boolean
   random seed = { newVal: newVal, newSeed: numRp.newSeed }
     where
       numRp = random seed
       newVal = numRp.newVal > 0.5
 
-  randomR :: Boolean -> Boolean -> Seed -> RandomPair Boolean
   randomR min max seed
     | min > max = randomR max min seed -- NOTE: flip min max
     | otherwise = { newVal: newVal, newSeed: rp.newSeed }
@@ -77,13 +68,11 @@ instance randomBoolean :: Random Boolean where
         newVal = rp.newVal && max || min
 
 instance randomChar :: Random Char where
-  random :: Seed -> RandomPair Char
   random seed = { newVal: newVal, newSeed: intRp.newSeed }
     where
       intRp = randomR 0 65535 seed
       newVal = toEnumWithDefaults bottom top intRp.newVal
 
-  randomR :: Char -> Char -> Seed -> RandomPair Char
   randomR min max seed
     | min > max = randomR max min seed -- NOTE: flip min max
     | otherwise = { newVal: newVal, newSeed: intRp.newSeed }
@@ -91,19 +80,15 @@ instance randomChar :: Random Char where
         intRp = randomR (fromEnum min) (fromEnum max) seed
         newVal = toEnumWithDefaults bottom top intRp.newVal
 
+-- Randoms
 
-class Random a <= Randoms a where
-  randoms :: Int -> Seed -> Array a
-  randomRs :: a -> a -> Int -> Seed -> Array a
+randoms :: forall a. Random a => Int -> Seed -> Array a
+randoms i = randomsF random i
 
-instance randomsRandom :: Random a => Randoms a where
-  randoms :: Int -> Seed -> Array a
-  randoms i = randomsF random i
+randomRs :: forall a. Random a => a -> a -> Int -> Seed -> Array a
+randomRs min max = randomsF (randomR min max)
 
-  randomRs :: a -> a -> Int -> Seed -> Array a
-  randomRs min max = randomsF (randomR min max)
-
-randomsF :: forall a. Randoms a => (Seed -> RandomPair a) -> Int -> Seed -> Array a
+randomsF :: forall a. Random a => (Seed -> RandomPair a) -> Int -> Seed -> Array a
 randomsF f i seed = run (withArray fill [])
   where
     fill :: forall h. STArray h a -> ST h Unit
@@ -115,16 +100,10 @@ randomsF f i seed = run (withArray fill [])
         void (write rp.newSeed seedref)
         void (push rp.newVal arr)
 
+-- RandomEff
 
-class Random a <= RandomEff a where
-  -- NOTE: https://github.com/purescript/documentation/blob/master/errors/OrphanTypeDeclaration.md
-  -- TODO: eliminate {}
-  randomEff :: {} -> Effect a
-  randomREff :: a -> a -> Effect a
+randomEff :: forall a. Random a => Effect a
+randomEff = pure <<< _.newVal <<< random =<< randomSeed
 
-instance randomEffRandom :: Random a => RandomEff a where
-  randomEff :: {} -> Effect a
-  randomEff _ = pure <<< _.newVal <<< random =<< randomSeed
-
-  randomREff :: a -> a -> Effect a
-  randomREff min max = pure <<< _.newVal <<< randomR min max =<< randomSeed
+randomREff :: forall a. Random a => a -> a -> Effect a
+randomREff min max = pure <<< _.newVal <<< randomR min max =<< randomSeed
