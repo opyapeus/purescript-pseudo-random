@@ -1,6 +1,7 @@
 module Random.PseudoRandom
     ( RandomPair
     , class Random
+    , class RandomR
     , random
     , randomR
     , randoms
@@ -26,20 +27,12 @@ type RandomPair a =
   , newSeed :: Seed
   }
 
-class Ord a <= Random a where
+class Random a where
   random :: Seed -> RandomPair a
-  randomR :: a -> a -> Seed -> RandomPair a
 
 instance randomInt :: Random Int where
   random seed = { newVal: unSeed newSeed, newSeed: newSeed }
     where newSeed = lcgNext seed
-
-  randomR min max seed
-    | min > max = randomR max min seed -- NOTE: flip min max
-    | otherwise = { newVal: newVal, newSeed: rp.newSeed }
-      where
-        rp = random seed
-        newVal = rp.newVal `mod` (max - min + 1) + min
 
 instance randomNumber :: Random Number where
   random seed = { newVal: newVal, newSeed: intRp.newSeed }
@@ -47,25 +40,11 @@ instance randomNumber :: Random Number where
       intRp = random seed
       newVal = toNumber intRp.newVal / toNumber lcgM
 
-  randomR min max seed
-    | min > max = randomR max min seed -- NOTE: flip min max
-    | otherwise = { newVal: newVal, newSeed: rp.newSeed }
-      where
-        rp = random seed
-        newVal = rp.newVal * (max - min) + min
-
 instance randomBoolean :: Random Boolean where
   random seed = { newVal: newVal, newSeed: numRp.newSeed }
     where
       numRp = random seed
       newVal = numRp.newVal > 0.5
-
-  randomR min max seed
-    | min > max = randomR max min seed -- NOTE: flip min max
-    | otherwise = { newVal: newVal, newSeed: rp.newSeed }
-      where
-        rp = random seed
-        newVal = rp.newVal && max || min
 
 instance randomChar :: Random Char where
   random seed = { newVal: newVal, newSeed: intRp.newSeed }
@@ -73,6 +52,34 @@ instance randomChar :: Random Char where
       intRp = randomR 0 65535 seed
       newVal = toEnumWithDefaults bottom top intRp.newVal
 
+class Random a <= RandomR a where
+  randomR :: a -> a -> Seed -> RandomPair a
+
+instance randomRInt :: RandomR Int where
+  randomR min max seed
+    | min > max = randomR max min seed -- NOTE: flip min max
+    | otherwise = { newVal: newVal, newSeed: rp.newSeed }
+      where
+        rp = random seed
+        newVal = rp.newVal `mod` (max - min + 1) + min
+
+instance randomRNumber :: RandomR Number where
+  randomR min max seed
+    | min > max = randomR max min seed -- NOTE: flip min max
+    | otherwise = { newVal: newVal, newSeed: rp.newSeed }
+      where
+        rp = random seed
+        newVal = rp.newVal * (max - min) + min
+
+instance randomRBoolean :: RandomR Boolean where
+  randomR min max seed
+    | min > max = randomR max min seed -- NOTE: flip min max
+    | otherwise = { newVal: newVal, newSeed: rp.newSeed }
+      where
+        rp = random seed
+        newVal = rp.newVal && max || min
+
+instance randomRChar :: RandomR Char where
   randomR min max seed
     | min > max = randomR max min seed -- NOTE: flip min max
     | otherwise = { newVal: newVal, newSeed: intRp.newSeed }
@@ -85,7 +92,7 @@ instance randomChar :: Random Char where
 randoms :: forall a. Random a => Int -> Seed -> Array a
 randoms i = randomsF random i
 
-randomRs :: forall a. Random a => a -> a -> Int -> Seed -> Array a
+randomRs :: forall a. RandomR a => a -> a -> Int -> Seed -> Array a
 randomRs min max = randomsF (randomR min max)
 
 randomsF :: forall a. Random a => (Seed -> RandomPair a) -> Int -> Seed -> Array a
@@ -105,5 +112,5 @@ randomsF f i seed = run (withArray fill [])
 randomEff :: forall a. Random a => Effect a
 randomEff = pure <<< _.newVal <<< random =<< randomSeed
 
-randomREff :: forall a. Random a => a -> a -> Effect a
+randomREff :: forall a. RandomR a => a -> a -> Effect a
 randomREff min max = pure <<< _.newVal <<< randomR min max =<< randomSeed

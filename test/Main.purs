@@ -5,7 +5,7 @@ import Prelude
 import Data.Array ((:))
 import Effect (Effect)
 import Effect.Class.Console (log)
-import Random.PseudoRandom (class Random, random, randomR, randomRs, randoms)
+import Random.PseudoRandom (class Random, class RandomR, random, randomR, randomRs, randoms)
 import Test.QuickCheck (Seed, mkSeed, quickCheck, (==?))
 
 main :: Effect Unit
@@ -40,7 +40,7 @@ randoms' n seed = map _.newVal $ iterate next n initial
     initial = random seed
     next rp = random rp.newSeed
 
-randomRs' :: forall a. Random a => a -> a -> Int -> Seed -> Array a
+randomRs' :: forall a. RandomR a => a -> a -> Int -> Seed -> Array a
 randomRs' min max n seed = map _.newVal $ iterate next n initial
   where
     initial = randomR min max seed
