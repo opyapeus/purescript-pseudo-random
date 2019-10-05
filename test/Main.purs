@@ -16,13 +16,13 @@ main = do
 
   log "randoms should equal to random chain"
   log "Int"
-  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Int
+  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? (randoms' len seed :: Array Int)
   log "Number"
-  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Number
+  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? (randoms' len seed :: Array Number)
   log "Boolean"
-  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Boolean
+  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? (randoms' len seed :: Array Boolean)
   log "Char"
-  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? randoms' len seed :: Array Char
+  quickCheck \n -> let seed = mkSeed n in randoms len seed ==? (randoms' len seed :: Array Char)
   log "randomRs should equal to randomR chain"
   log "Int"
   quickCheck \n -> let seed = mkSeed n in randomRs 0 10 len seed ==? randomRs' 0 10 len seed
